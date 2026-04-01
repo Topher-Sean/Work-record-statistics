@@ -1,0 +1,91 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-paper text-slate-800 font-sans antialiased;
+    /* 简单的纸张纹理背景效果 */
+    background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' fill='%23FAF7F2'/%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif;
+  }
+}
+
+@layer components {
+  /* 森系卡片样式 */
+  .card-paper {
+    @apply bg-white/80 backdrop-blur-sm rounded-2xl border border-white/60 shadow-[0_4px_20px_-2px_rgba(0,0,0,0.05)] hover:shadow-[0_10px_25px_-5px_rgba(0,0,0,0.08)] transition-shadow duration-300 relative;
+  }
+  
+  /* 手绘风按钮基础样式 */
+  .btn-handdrawn {
+    @apply relative px-4 py-2 rounded-lg font-medium transition-all duration-300 active:scale-95 flex items-center justify-center;
+  }
+  
+  /* 按钮变体 */
+  .btn-primary {
+    @apply btn-handdrawn bg-rose text-white hover:bg-rose-dark shadow-sm hover:shadow-md;
+  }
+  
+  .btn-secondary {
+    @apply btn-handdrawn bg-blue text-white hover:bg-blue-dark shadow-sm hover:shadow-md;
+  }
+  
+  .btn-outline {
+    @apply btn-handdrawn border-2 border-olive text-olive-dark hover:bg-olive-light/20;
+  }
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-olive-light rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-olive;
+}
+
+/* 浮动动画 */
+@keyframes float {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+}
+
+/* 进入页面的平滑加载过渡 */
+.page-enter-active {
+  transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.page-leave-active {
+  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(30px) scale(0.97);
+}
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(-20px) scale(0.97);
+}
+
