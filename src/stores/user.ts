@@ -41,6 +41,36 @@ export const useUserStore = defineStore('user', () => {
             role.value = existingUser.role
           }
         }
+
+        // Sync local prompts to Supabase if missing in cloud
+        if (dbUser.value) {
+          const localConfigStr = localStorage.getItem('ai_summary_prompt_config')
+          const localPrompt = localStorage.getItem('ai_summary_prompt')
+          
+          let needsUpdate = false
+          const updateData: any = {}
+          
+          if (!dbUser.value.ai_prompt_config && localConfigStr) {
+            try {
+              updateData.ai_prompt_config = JSON.parse(localConfigStr)
+              needsUpdate = true
+            } catch (e) {}
+          }
+          if (!dbUser.value.ai_prompt && localPrompt) {
+            updateData.ai_prompt = localPrompt
+            needsUpdate = true
+          }
+          
+          if (needsUpdate) {
+            const { error } = await supabase
+              .from('users')
+              .update(updateData)
+              .eq('id', user.value.id)
+            if (!error) {
+              Object.assign(dbUser.value, updateData)
+            }
+          }
+        }
       } else {
         // Not setting isGuest here if they haven't explicitly chosen it.
         // Wait for explicit guest login or redirect to login page.

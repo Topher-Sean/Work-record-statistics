@@ -30,12 +30,17 @@ export const aiService = {
       
       // 在后端运行的环境中，如果发现没有配置Key，或者配置了占位符，返回模拟数据
       const apiKey = process.env.OPENAI_API_KEY;
+      // 安全获取数据，防止前端传空导致报错
+      const projectsList = Array.isArray(workData?.projects) ? workData.projects : [];
+      const commitsList = workData?.commits || '';
+      const workItemsList = Array.isArray(workData?.workItems) ? workData.workItems : [];
+
       if (!apiKey || apiKey === 'dummy_key_for_init' || apiKey === 'your_dashscope_api_key_here' || apiKey === '') {
         console.warn('OPENAI_API_KEY is not set or invalid, returning mock data. Current Key:', apiKey);
         // 如果没有配置有效的API Key，返回模拟数据
         return userRole === 'programmer' 
-          ? `[本地模拟总结] 今天主要负责了${workData.projects.join('、')}等项目的开发，提交记录如下：\n${workData.commits}\n\n（注：请在后端环境正确加载真实的 API Key 以获取 AI 总结）`
-          : `[本地模拟总结] 今日完成了以下工作项：\n${workData.workItems.map((item: any) => `- ${item.content} (耗时: ${item.duration}h)`).join('\n')}\n\n（注：请在后端环境正确加载真实的 API Key 以获取 AI 总结）`;
+          ? `[本地模拟总结] 今天主要负责了${projectsList.join('、')}等项目的开发，提交记录如下：\n${commitsList}\n\n（注：请在后端环境正确加载真实的 API Key 以获取 AI 总结）`
+          : `[本地模拟总结] 今日完成了以下工作项：\n${workItemsList.map((item: any) => `- ${item.content} (耗时: ${item.duration}h)`).join('\n')}\n\n（注：请在后端环境正确加载真实的 API Key 以获取 AI 总结）`;
       }
 
       const client = getOpenAIClient();
@@ -55,9 +60,9 @@ export const aiService = {
 6. 总字数严格控制在150字左右，排版清晰，可使用精简的列表。
 
 工作数据：
-涉及项目：${workData.projects.join(', ')}
+涉及项目：${projectsList.join(', ')}
 详细提交记录：
-${workData.commits}
+${commitsList}
 `;
       } else {
         prompt = `
@@ -73,7 +78,7 @@ ${workData.commits}
 
 工作数据：
 工作项及耗时：
-${workData.workItems.map((item: any) => `- ${item.content} (耗时: ${item.duration}h)`).join('\n')}
+${workItemsList.map((item: any) => `- ${item?.content || '未知'} (耗时: ${item?.duration || 0}h)`).join('\n')}
 `;
       }
 

@@ -191,7 +191,7 @@ const loadTodayRecord = async () => {
         const { projectName, rest } = parseProjectNamePrefix(raw);
         return {
           id: String(c.id || Date.now().toString()),
-          projectId: projectName ? findProjectIdByName(projectName) : null,
+          projectId: c.project_id || (projectName ? findProjectIdByName(projectName) : null),
           commit: rest.trim(),
           selected: true,
         };
@@ -206,7 +206,7 @@ const loadTodayRecord = async () => {
         const { projectName, rest } = parseProjectNamePrefix(raw);
         return {
           id: item.id,
-          projectId: projectName ? findProjectIdByName(projectName) : null,
+          projectId: item.project_id || (projectName ? findProjectIdByName(projectName) : null),
           content: rest.trim(),
           duration: item.duration_minutes ? (item.duration_minutes / 60).toString() : '',
           selected: true
@@ -389,6 +389,7 @@ const saveRecord = async () => {
           const projName = p ? p.name : '未选择项目';
           return {
             record_id: recordId,
+            project_id: r.projectId,
             commit_hash: 'manual',
             commit_message: `【${projName}】:\n${r.commit}`
           };
@@ -407,6 +408,7 @@ const saveRecord = async () => {
           const projName = p ? p.name : '未选择项目';
           return {
             record_id: recordId,
+            project_id: item.projectId,
             content: `【${projName}】${item.content}`,
             duration_minutes: parseFloat(item.duration || '0') * 60,
             order_index: index

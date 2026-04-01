@@ -57,7 +57,8 @@ const handleLogout = async () => {
         <div class="hidden md:flex items-center space-x-4">
           <div class="relative group cursor-pointer" @click="router.push('/profile')">
             <div class="w-9 h-9 rounded-full bg-rose-light/50 flex items-center justify-center border-2 border-white shadow-sm overflow-hidden">
-              <UserIcon class="w-5 h-5 text-rose-dark" />
+              <img v-if="userStore.dbUser?.avatar_url" :src="userStore.dbUser.avatar_url" class="w-full h-full object-cover" alt="User Avatar" />
+              <UserIcon v-else class="w-5 h-5 text-rose-dark" />
             </div>
             
             <!-- 下拉菜单 -->

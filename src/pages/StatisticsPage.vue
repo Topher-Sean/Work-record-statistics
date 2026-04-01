@@ -211,8 +211,8 @@ const selectItem = (date: dayjs.Dayjs) => {
     
     <main class="flex-grow max-w-6xl mx-auto w-full px-4 sm:px-6 py-8 animate-[fade-in-up_0.6s_ease-out]">
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
-          <h1 class="text-3xl font-serif font-bold text-slate-800 flex items-center gap-3">
+        <div class="w-full">
+          <h1 class="text-3xl  font-serif font-bold text-slate-800 flex items-center gap-3">
             <span class="inline-block w-2 h-8 bg-rose rounded-full"></span>
             数据统计
           </h1>

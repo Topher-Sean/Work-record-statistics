@@ -29,6 +29,8 @@ const navigateToDashboard = () => {
   }, 600); // 等待退场动画结束
 };
 
+const isLoginMode = ref(true);
+
 const handleLogin = async () => {
   if (!email.value || !password.value) {
     errorMessage.value = '请填写邮箱和密码';
@@ -39,48 +41,54 @@ const handleLogin = async () => {
   errorMessage.value = '';
   
   try {
-    // 尝试登录
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: email.value,
-      password: password.value,
-    });
-    
-    if (error) {
-      // 如果报错说是无效的凭证，可能是新用户，尝试注册
-      if (error.message.includes('Invalid login credentials')) {
-        // 先尝试注册
-        const { error: signUpError } = await supabase.auth.signUp({
-          email: email.value,
-          password: password.value,
-        });
-        
-        if (signUpError) {
-          if (signUpError.message.includes('User already registered')) {
-            throw new Error('密码错误，请重试');
-          }
-          throw signUpError;
-        }
-        
-        // 由于 Supabase 默认开启了邮箱验证，新注册用户可能无法直接登录。
-        // 为了开发测试方便，如果是邮箱未验证的提示，我们给个清晰的反馈：
-        errorMessage.value = '注册成功！如果配置了邮箱验证，请检查收件箱。否则请再次点击登录。';
-        return;
-      } else if (error.message.includes('Email not confirmed')) {
-        // In local development, email confirmation might be required by Supabase default settings
-        // But for easier testing, we often disable it. Let's catch it explicitly.
-        throw new Error('请先验证您的邮箱，或在 Supabase 后台关闭邮箱验证功能');
-      } else {
-        throw error;
-      }
+    if (isLoginMode.value) {
+      // 登录
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.value,
+        password: password.value,
+      });
+      if (error) throw error;
+    } else {
+      // 注册
+      const { error } = await supabase.auth.signUp({
+        email: email.value,
+        password: password.value,
+      });
+      if (error) throw error;
+      errorMessage.value = '注册成功！如果配置了邮箱验证，请检查收件箱。否则请直接登录。';
+      isLoginMode.value = true;
+      return;
     }
     
     await userStore.fetchUser();
     userStore.setGuest(false);
     navigateToDashboard();
   } catch (error: any) {
-    errorMessage.value = error.message || '登录失败，请重试';
+    errorMessage.value = (isLoginMode.value ? '登录' : '注册') + '失败: ' + (error.message || '请重试');
   } finally {
     isSubmitting.value = false;
+  }
+};
+
+const handleWechatLogin = async () => {
+  try {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'wechat' as any, // Supabase 暂未原生支持 WeChat，这里仅作对接演示或接入自定义 OIDC
+    });
+    if (error) throw error;
+  } catch (error: any) {
+    errorMessage.value = '微信登录暂不可用: ' + error.message;
+  }
+};
+
+const handleAppleLogin = async () => {
+  try {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'apple',
+    });
+    if (error) throw error;
+  } catch (error: any) {
+    errorMessage.value = 'Apple登录失败: ' + error.message;
   }
 };
 
@@ -143,9 +151,15 @@ const handleGuestLogin = () => {
         <p v-if="errorMessage" class="text-rose text-sm text-center">{{ errorMessage }}</p>
 
         <HanddrawnButton block size="lg" @click="handleLogin" :disabled="isSubmitting" class="mt-6">
-          <span>{{ isSubmitting ? '登录中...' : '登录 / 注册' }}</span>
+          <span>{{ isSubmitting ? '处理中...' : (isLoginMode ? '登录' : '注册') }}</span>
           <ArrowRight v-if="!isSubmitting" class="w-4 h-4 ml-2 inline" />
         </HanddrawnButton>
+
+        <div class="text-center mt-4">
+          <button @click="isLoginMode = !isLoginMode; errorMessage = ''" class="text-sm text-olive hover:underline transition-colors">
+            {{ isLoginMode ? '没有账号？点击注册' : '已有账号？点击登录' }}
+          </button>
+        </div>
       </div>
 
       <div class="mt-8 transform transition-all duration-700 delay-500" :class="isMounted ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'">
@@ -159,10 +173,10 @@ const handleGuestLogin = () => {
         </div>
 
         <div class="mt-6 grid grid-cols-3 gap-4">
-          <button class="flex justify-center items-center py-2.5 border-2 border-olive-light/20 rounded-xl hover:bg-white/60 transition-colors group">
+          <button @click="handleWechatLogin" class="flex justify-center items-center py-2.5 border-2 border-olive-light/20 rounded-xl hover:bg-white/60 transition-colors group" title="微信登录">
             <MessageCircle class="w-5 h-5 text-green-500 group-hover:scale-110 transition-transform" />
           </button>
-          <button class="flex justify-center items-center py-2.5 border-2 border-olive-light/20 rounded-xl hover:bg-white/60 transition-colors group">
+          <button @click="handleAppleLogin" class="flex justify-center items-center py-2.5 border-2 border-olive-light/20 rounded-xl hover:bg-white/60 transition-colors group" title="Apple登录">
             <Apple class="w-5 h-5 text-slate-800 group-hover:scale-110 transition-transform" />
           </button>
           <button @click="handleGuestLogin" class="flex justify-center items-center py-2.5 border-2 border-olive-light/20 rounded-xl hover:bg-white/60 transition-colors group relative overflow-hidden" title="游客模式">

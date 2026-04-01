@@ -42,9 +42,15 @@ const templateMenuEl = ref<HTMLElement | null>(null);
 
 const makeId = () => `${Math.random().toString(36).slice(2, 8)}${Date.now().toString(36)}`;
 
+const defaultPromptContent = `请严格遵循以下要求：
+1. 语气客观、专业、精炼。
+2. 突出核心技术产出和业务价值。
+3. 排版清晰，可使用精简的列表。
+4. 总字数严格控制在150字左右。`;
+
 const normalizePromptConfig = (cfg: any, legacyPrompt: string): PromptConfig => {
   const now = new Date().toISOString();
-  const legacy = (legacyPrompt || '').trim();
+  const legacy = (legacyPrompt || '').trim() || defaultPromptContent;
   const fallback: PromptConfig = {
     version: 1,
     activeId: 'default',
@@ -156,12 +162,11 @@ const loadUserData = () => {
 
   promptConfig.value = normalizePromptConfig(nextConfig, legacyPrompt);
 
-  if (userStore.isGuest) {
-    try {
-      localStorage.setItem('ai_summary_prompt_config', JSON.stringify(promptConfig.value));
-      localStorage.setItem('ai_summary_prompt', getActiveTemplate(promptConfig.value).content || '');
-    } catch {}
-  }
+  // Always sync cloud data to local storage to ensure they are consistent
+  try {
+    localStorage.setItem('ai_summary_prompt_config', JSON.stringify(promptConfig.value));
+    localStorage.setItem('ai_summary_prompt', getActiveTemplate(promptConfig.value).content || '');
+  } catch {}
 
   syncEditorFromConfig();
 };
@@ -279,7 +284,7 @@ const addTemplate = () => {
   promptConfig.value.templates.unshift({
     id,
     name: '新模板',
-    content: '',
+    content: defaultPromptContent,
     updatedAt: now
   });
   promptConfig.value.activeId = id;
@@ -337,9 +342,10 @@ const savePromptConfig = async () => {
     }
 
     let cloudSaved = true;
+    const rawConfig = JSON.parse(JSON.stringify(promptConfig.value));
     const { error } = await supabase
       .from('users')
-      .update({ ai_prompt_config: promptConfig.value, ai_prompt: activeContent })
+      .update({ ai_prompt_config: rawConfig, ai_prompt: activeContent })
       .eq('id', userId);
 
     if (error) {
